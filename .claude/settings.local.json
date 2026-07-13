@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/D:\\d D:\\workspace2/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

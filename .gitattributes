@@ -1,0 +1,2 @@
+/Users/max/Workspace/treesense-android-native/app/src/main/assets/resnet50d_1_224_224_3.tflite filter=lfs diff=lfs merge=lfs -text
+/Users/max/Workspace/treesense-android-native/app/src/main/assets/resnet50d_1_224_224_3_20250911.tflite filter=lfs diff=lfs merge=lfs -text

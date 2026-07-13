@@ -1,0 +1,62 @@
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.compose.compiler)
+}
+
+android {
+    namespace 'me.rpgz.treetools.ml'
+    compileSdk 35
+    aaptOptions {
+        noCompress 'onnx' // 比如：'mp3', 'json', 'bin'
+    }
+    defaultConfig {
+        minSdk 28
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+    buildFeatures {
+        compose true
+    }
+}
+
+dependencies {
+    implementation("org.tensorflow:tensorflow-lite:2.17.0")
+    implementation 'org.tensorflow:tensorflow-lite-api:2.17.0'
+    api files('libs/librealsense.aar')
+    implementation 'org.tensorflow:tensorflow-lite-select-tf-ops:2.16.1'
+    implementation 'org.tensorflow:tensorflow-lite-support:0.5.0'
+    implementation 'com.google.code.gson:gson:2.13.1'
+    
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.appcompat
+    implementation libs.navigation.compose
+    implementation libs.androidx.lifecycle.runtime.ktx
+    implementation libs.androidx.activity.compose
+    implementation platform(libs.androidx.compose.bom)
+    implementation libs.androidx.ui
+    implementation libs.androidx.ui.graphics
+    implementation libs.androidx.ui.tooling.preview
+    implementation libs.androidx.material3
+    implementation libs.androidx.camera.core
+
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.espresso.core
+}
+
