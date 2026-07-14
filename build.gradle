@@ -10,16 +10,29 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.5.2'
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22'
-        classpath 'com.google.devtools.ksp:symbol-processing-gradle-plugin:1.8.22-1.0.11'
-        classpath 'org.jetbrains.kotlin:kotlin-annotation-processing-gradle:1.8.22'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22'
+        classpath 'com.google.devtools.ksp:symbol-processing-gradle-plugin:1.9.22-1.0.18'
+        classpath 'org.jetbrains.kotlin:kotlin-annotation-processing-gradle:1.9.22'
         classpath 'com.google.dagger:hilt-android-gradle-plugin:2.55'
-        classpath 'org.jetbrains.kotlin:kotlin-serialization:1.8.22'
+        classpath 'org.jetbrains.kotlin:kotlin-serialization:1.9.22'
     }
 }
 
 plugins {
     id 'com.android.application' version '8.5.2' apply false
-    id 'org.jetbrains.kotlin.android' version '1.8.22' apply false
+    id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
     id 'com.android.library' version '8.5.2' apply false
+}
+
+allprojects {
+    configurations.all {
+        resolutionStrategy {
+            force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22'
+            force 'org.jetbrains.kotlin:kotlin-reflect:1.9.22'
+            force 'org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3'
+            force 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3'
+        }
+    }
 }

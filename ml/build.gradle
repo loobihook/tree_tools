@@ -1,7 +1,9 @@
 plugins {
     id 'com.android.library' version '8.5.2'
-    id 'org.jetbrains.kotlin.android' version '1.8.22'
+    id 'org.jetbrains.kotlin.android' version '1.9.22'
 }
+
+
 
 android {
     namespace 'me.rpgz.treetools.ml'
@@ -31,6 +33,9 @@ android {
     }
     buildFeatures {
         compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion "1.5.10"
     }
 }
 

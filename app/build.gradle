@@ -1,6 +1,6 @@
 plugins {
     id 'com.android.application' version '8.5.2'
-    id 'org.jetbrains.kotlin.android' version '1.8.22'
+    id 'org.jetbrains.kotlin.android' version '1.9.22'
 }
 
 apply plugin: 'com.google.devtools.ksp'
@@ -47,6 +47,9 @@ android {
     buildFeatures {
         compose true
     }
+    composeOptions {
+        kotlinCompilerExtensionVersion "1.5.10"
+    }
 }
 
 dependencies {
@@ -61,8 +64,7 @@ dependencies {
 //    implementation("com.openai:openai-java:3.1.2")
 //    implementation("com.alibaba:dashscope-sdk-java:2.21.5")
     // define a BOM and its version
-    implementation(platform("com.squareup.okhttp3:okhttp-bom:5.1.0"))
-    // define any required OkHttp artifacts without version
+    implementation(platform("com.squareup.okhttp3:okhttp-bom:4.12.0"))
     implementation("com.squareup.okhttp3:okhttp")
     implementation("com.squareup.okhttp3:okhttp-sse")
 
