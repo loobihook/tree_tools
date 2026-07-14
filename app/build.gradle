@@ -1,11 +1,11 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
-    alias(libs.plugins.kt.serialization)
-    alias(libs.plugins.compose.compiler)
+    id 'com.android.application' version '8.5.2'
+    id 'org.jetbrains.kotlin.android' version '1.8.22'
 }
+
+apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'com.google.dagger.hilt.android'
+apply plugin: 'kotlinx-serialization'
 
 android {
     namespace 'me.rpgz.treetools'

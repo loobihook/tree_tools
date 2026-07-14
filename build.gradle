@@ -1,11 +1,25 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.5.2'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22'
+        classpath 'com.google.devtools.ksp:symbol-processing-gradle-plugin:1.8.22-1.0.11'
+        classpath 'org.jetbrains.kotlin:kotlin-annotation-processing-gradle:1.8.22'
+        classpath 'com.google.dagger:hilt-android-gradle-plugin:2.55'
+        classpath 'org.jetbrains.kotlin:kotlin-serialization:1.8.22'
+    }
+}
+
 plugins {
-    alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.android) apply false
-    alias(libs.plugins.android.library) apply false
-    alias(libs.plugins.ksp) apply false
-    alias(libs.plugins.kapt) apply false
-    alias(libs.plugins.hilt) apply false
-    alias(libs.plugins.compose.compiler) apply false
-    alias(libs.plugins.kt.serialization) apply false
+    id 'com.android.application' version '8.5.2' apply false
+    id 'org.jetbrains.kotlin.android' version '1.8.22' apply false
+    id 'com.android.library' version '8.5.2' apply false
 }
