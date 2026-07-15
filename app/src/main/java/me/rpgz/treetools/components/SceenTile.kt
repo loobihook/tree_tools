@@ -17,14 +17,11 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import me.rpgz.treetools.ui.theme.AppTypography
 
-/**
- * only when navController is not null and backBtn is true, the back button work properly
- */
 @Composable
 fun ScreenTile(title: String, navController: NavController?=null, backBtn: Boolean = false) {
-    Column(modifier = Modifier.padding(bottom = 12.dp, top = if(backBtn) 0.dp else 12.dp), horizontalAlignment = Alignment.Start) {
+    Column(modifier = Modifier.padding(bottom = 16.dp, top = if(backBtn) 8.dp else 16.dp), horizontalAlignment = Alignment.Start) {
         if(backBtn) {
-            TextButton(onClick = { navController?.popBackStack() }, contentPadding = PaddingValues(all=0.dp), modifier = Modifier.height(36.dp)) {
+            TextButton(onClick = { navController?.popBackStack() }, contentPadding = PaddingValues(all=0.dp), modifier = Modifier.height(40.dp)) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "go back")
                 Text("返回", style = AppTypography.titleMedium)
             }

@@ -29,12 +29,11 @@ fun RecordListItem(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showOptionsMenu by remember { mutableStateOf(false) }
     
-    val dateFormat = remember { SimpleDateFormat("yyyy年MM月dd日 HH:mm", Locale.getDefault()) }
+    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
     val formattedDate = remember(record.createdAt) { 
         dateFormat.format(Date(record.createdAt))
     }
     
-    // Parse extra data
     val extraData = remember(record.extra) {
         try {
             if (record.extra != null) {
@@ -48,34 +47,45 @@ fun RecordListItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(8.dp),
-        onClick = { record.id?.let { onItemClick(it) } }
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp,
+            pressedElevation = 8.dp
+        ),
+        shape = RoundedCornerShape(16.dp),
+        onClick = { record.id?.let { onItemClick(it) } },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
-            // Header row with title and menu
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = record.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
+                Box(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = record.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 
                 Box {
-                    IconButton(onClick = { showOptionsMenu = true }) {
+                    IconButton(
+                        onClick = { showOptionsMenu = true },
+                        modifier = Modifier.size(36.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = "更多选项"
+                            contentDescription = "更多选项",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     
@@ -84,7 +94,7 @@ fun RecordListItem(
                         onDismissRequest = { showOptionsMenu = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("删除") },
+                            text = { Text("删除", color = MaterialTheme.colorScheme.error) },
                             onClick = { 
                                 showOptionsMenu = false
                                 showDeleteDialog = true
@@ -92,7 +102,8 @@ fun RecordListItem(
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
-                                    contentDescription = null
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error
                                 )
                             }
                         )
@@ -100,24 +111,25 @@ fun RecordListItem(
                 }
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
-            // Tree information
             if (extraData != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     extraData.treeSpecies?.let { species ->
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "树种",
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = species,
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -128,12 +140,14 @@ fun RecordListItem(
                         Column {
                             Text(
                                 text = "树高",
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "${height}m",
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
@@ -142,34 +156,34 @@ fun RecordListItem(
                         Column {
                             Text(
                                 text = "直径",
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "${diameter}cm",
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
             
-            // Note if available
             record.note?.let { note ->
                 Text(
                     text = note,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
                 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
             
-            // Date and status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -177,23 +191,25 @@ fun RecordListItem(
             ) {
                 Text(
                     text = formattedDate,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
-                // Report status indicator
                 if (record.report?.isNotBlank() == true) {
                     AssistChip(
                         onClick = { },
                         label = { 
                             Text(
-                                text = "已生成报告",
-                                style = MaterialTheme.typography.labelSmall
+                                text = "报告已生成",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold
                             )
                         },
                         colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ),
+                        shape = RoundedCornerShape(20.dp)
                     )
                 } else {
                     AssistChip(
@@ -205,37 +221,40 @@ fun RecordListItem(
                             )
                         },
                         colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        shape = RoundedCornerShape(20.dp)
                     )
                 }
             }
         }
     }
     
-    // Delete confirmation dialog
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("确认删除") },
-            text = { Text("确定要删除这条记录吗？此操作无法撤销。") },
+            title = { Text("确认删除", style = MaterialTheme.typography.headlineSmall) },
+            text = { Text("确定要删除这条记录吗？此操作无法撤销。", style = MaterialTheme.typography.bodyMedium) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
                         record.id?.let { onDeleteClick(it) }
-                    }
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("删除")
+                    Text("删除", style = MaterialTheme.typography.labelLarge)
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showDeleteDialog = false }
                 ) {
-                    Text("取消")
+                    Text("取消", style = MaterialTheme.typography.labelLarge)
                 }
-            }
+            },
+            shape = RoundedCornerShape(20.dp)
         )
     }
 }

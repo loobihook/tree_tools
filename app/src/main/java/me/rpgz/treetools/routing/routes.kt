@@ -2,10 +2,6 @@ package me.rpgz.treetools.routing
 
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.Icon
-
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +17,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.dp
 
 sealed class Routes(val route : String) {
     data object ModelTest : Routes("model-test")
@@ -30,7 +34,6 @@ sealed class Routes(val route : String) {
     data object Home : Routes("home")
     data object Settings : Routes("settings")
     data object Sensors : Routes("sensors")
-
     data object RealSenseMeasurement: Routes("realsense-measurement")
 }
 
@@ -38,8 +41,6 @@ fun bottomNavigationItems() : List<BottomNavigationItem> {
     return listOf(
         BottomNavigationItem("首页", Icons.Default.Home, route=Routes.Home.route),
         BottomNavigationItem("传感器", Icons.Filled.Bluetooth, route=Routes.Sensors.route),
-//        BottomNavigationItem("模型", Icons.Default.Star, route=Routes.ModelTest.route),
-//        BottomNavigationItem("相机", Icons.Default.Menu, route=Routes.RealSenseTest.route),
         BottomNavigationItem("设置", Icons.Default.Settings, route=Routes.Settings.route),
     )
 }
@@ -55,13 +56,35 @@ fun AppBottomNavigation(navController: NavController, show: Boolean) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     var navigationSelectedItem by remember { mutableIntStateOf(0) }
+    
     if(show) {
-        NavigationBar{
-            bottomNavigationItems().forEachIndexed { index,navigationItem ->
+        NavigationBar(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFf0fdf4),
+                            Color(0xFFdcfce7)
+                        )
+                    ),
+                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+                ),
+            containerColor = Color.Transparent,
+            tonalElevation = 8.dp
+        ){
+            bottomNavigationItems().forEachIndexed { index, navigationItem ->
+                val isSelected = currentDestination?.hierarchy?.any { it.route == navigationItem.route } == true
+                
                 NavigationBarItem(
-                    modifier = Modifier.fillMaxWidth(0.25f),
-                    label = { Text(navigationItem.label) },
-                    selected = currentDestination?.hierarchy?.any { it.route == navigationItem.route } == true,
+                    modifier = Modifier.fillMaxWidth(0.33f),
+                    label = { 
+                        Text(
+                            navigationItem.label,
+                            fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Normal
+                        ) 
+                    },
+                    selected = isSelected,
                     onClick = {
                         navigationSelectedItem = index
                         navController.navigate(navigationItem.route) {
@@ -75,9 +98,17 @@ fun AppBottomNavigation(navController: NavController, show: Boolean) {
                     icon = {
                         Icon(
                             navigationItem.icon,
-                            contentDescription = navigationItem.label
+                            contentDescription = navigationItem.label,
+                            modifier = Modifier
                         )
-                    }
+                    },
+                    colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color(0xFF065f46),
+                        selectedTextColor = Color(0xFF065f46),
+                        indicatorColor = Color(0xFF86efac).copy(alpha = 0.5f),
+                        unselectedIconColor = Color(0xFF708090),
+                        unselectedTextColor = Color(0xFF708090)
+                    )
                 )
             }
         }
