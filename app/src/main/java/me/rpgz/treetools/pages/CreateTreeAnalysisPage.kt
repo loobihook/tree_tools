@@ -81,7 +81,7 @@ fun CreateTreeAnalysisPage(
     viewModel: CreateTreeSensePageViewModel = hiltViewModel(),
     settingPageViewModel: SettingPageViewModel = hiltViewModel()
 ) {
-    val sensorData = AppContainer.instance.hm10Manager.sensorData.collectAsState()
+    val sensorData = AppContainer.instance.sensorManager.sensorData.collectAsState()
     val context = LocalContext.current
     val userPreferences = remember { UserPreferences(context) }
     val scrollState = rememberScrollState()

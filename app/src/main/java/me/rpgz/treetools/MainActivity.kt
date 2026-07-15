@@ -56,13 +56,13 @@ class MainActivity : ComponentActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         appContainer.realSensePermission.handlePermissionResult(requestCode, permissions, grantResults)
         appContainer.bleManager.handlePermissionResult(requestCode, permissions, grantResults)
-        appContainer.hm10Manager.handlePermissionResult(requestCode, permissions, grantResults)
+        appContainer.handlePermissionResult(requestCode, permissions, grantResults)
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         appContainer.bleManager.handleActivityResult(requestCode, resultCode)
-        appContainer.hm10Manager.handleActivityResult(requestCode, resultCode)
+        appContainer.handleActivityResult(requestCode, resultCode)
         super.onActivityResult(requestCode, resultCode, data)
     }
 

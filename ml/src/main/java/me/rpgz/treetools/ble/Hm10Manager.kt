@@ -19,7 +19,7 @@ import kotlin.math.min
 class Hm10Manager(
     private val context: Context,
     private val activity: Activity
-) {
+) : SensorManager {
 
     companion object {
         private const val TAG = "Hm10Manager"
@@ -51,19 +51,19 @@ class Hm10Manager(
     private lateinit var scope: CoroutineScope
     // State flows
     private val _deviceStatus = MutableStateFlow("Searching...")
-    val deviceStatus: StateFlow<String> = _deviceStatus.asStateFlow()
+    override val deviceStatus: StateFlow<String> = _deviceStatus.asStateFlow()
 
     private val _isConnected = MutableStateFlow(false)
-    val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()
+    override val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()
 
     private val _isListening = MutableStateFlow(false)
-    val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
+    override val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
 
     private val _receivedMessages = MutableStateFlow<List<String>>(emptyList())
-    val receivedMessages: StateFlow<List<String>> = _receivedMessages.asStateFlow()
+    override val receivedMessages: StateFlow<List<String>> = _receivedMessages.asStateFlow()
 
     private val _sensorData = MutableStateFlow<SensorData?>(null)
-    val sensorData: StateFlow<SensorData?> = _sensorData.asStateFlow()
+    override val sensorData: StateFlow<SensorData?> = _sensorData.asStateFlow()
 
     private var currentDevice: BleDevice? = null
     private val timeFormatter = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
@@ -373,7 +373,7 @@ class Hm10Manager(
     /**
      * Start listening for data by sending 'a' command
      */
-    fun startListening() {
+    override fun startListening() {
         if (!_isConnected.value) {
             Log.w(TAG, "Not connected to device")
             return
@@ -425,7 +425,7 @@ class Hm10Manager(
     /**
      * Stop listening for data by sending 'b' command
      */
-    fun stopListening() {
+    override fun stopListening() {
         if (!_isConnected.value) {
             Log.w(TAG, "Not connected to device")
             return
@@ -472,7 +472,7 @@ class Hm10Manager(
     /**
      * Disconnect from current device
      */
-    fun disconnect() {
+    override fun disconnect() {
         bleConnection.disconnect()
         currentDevice = null
         _isListening.value = false
@@ -482,7 +482,7 @@ class Hm10Manager(
     /**
      * Clear received messages
      */
-    fun clearMessages() {
+    override fun clearMessages() {
         _receivedMessages.value = emptyList()
     }
 
@@ -519,7 +519,7 @@ class Hm10Manager(
     /**
      * Clean up resources
      */
-    fun cleanup() {
+    override fun cleanup() {
         scope.cancel()
         bleScanner.cleanup()
         bleConnection.close()
@@ -530,7 +530,7 @@ class Hm10Manager(
         _deviceStatus.value = "Cleaned up"
     }
 
-    fun reset() {
+    override fun reset() {
         cleanup()
         initializeManager()
     }

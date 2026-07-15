@@ -5,6 +5,9 @@ import android.app.Application
 import androidx.annotation.MainThread
 import me.rpgz.treetools.ble.BleManager
 import me.rpgz.treetools.ble.Hm10Manager
+import me.rpgz.treetools.ble.SensorManager
+import me.rpgz.treetools.ble.SensorMode
+import me.rpgz.treetools.ble.SimulatedSensorManager
 import me.rpgz.treetools.permissions.RealSensePermission
 import me.rpgz.treetools.ml.Infer
 import java.io.InputStream
@@ -13,6 +16,7 @@ import java.nio.channels.Channels
 
 data class AppConfig(
     val modelBytes: ByteBuffer? = null,
+    val sensorMode: SensorMode = SensorMode.REAL,
 )
 
 class AppContainer private constructor(
@@ -37,11 +41,31 @@ class AppContainer private constructor(
         initialize()
     }
 
-    //
-    val hm10Manager = Hm10Manager(
-        context = app,
-        activity = activity
-    )
+    val sensorManager: SensorManager
+
+    private val realHm10Manager: Hm10Manager?
+
+    init {
+        if (config.sensorMode == SensorMode.REAL) {
+            val manager = Hm10Manager(context = app, activity = activity)
+            realHm10Manager = manager
+            sensorManager = manager
+        } else {
+            realHm10Manager = null
+            sensorManager = SimulatedSensorManager()
+        }
+    }
+
+    val hm10Manager: Hm10Manager
+        get() = realHm10Manager ?: error("Hm10Manager not available in simulated mode")
+
+    fun handlePermissionResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        realHm10Manager?.handlePermissionResult(requestCode, permissions, grantResults)
+    }
+
+    fun handleActivityResult(requestCode: Int, resultCode: Int) {
+        realHm10Manager?.handleActivityResult(requestCode, resultCode)
+    }
 
     val infer: Infer by lazy {
         val modelBytes = config.modelBytes ?: loadModelFromAssets()
@@ -81,6 +105,6 @@ class AppContainer private constructor(
     fun onDestroy() {
         realSensePermission.unregister()
         bleManager.cleanup()
-        hm10Manager.cleanup()
+        sensorManager.cleanup()
     }
 }

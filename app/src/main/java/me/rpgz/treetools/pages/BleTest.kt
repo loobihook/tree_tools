@@ -17,14 +17,14 @@ import me.rpgz.treetools.components.ScreenTile
 fun BleTest() {
 
 
-    val hm10Manager = remember {
-        AppContainer.instance.hm10Manager
+    val sensorManager = remember {
+        AppContainer.instance.sensorManager
     }
     
-    val deviceStatus by hm10Manager.deviceStatus.collectAsStateWithLifecycle()
-    val isConnected by hm10Manager.isConnected.collectAsStateWithLifecycle()
-    val isListening by hm10Manager.isListening.collectAsStateWithLifecycle()
-    val receivedMessages by hm10Manager.receivedMessages.collectAsStateWithLifecycle()
+    val deviceStatus by sensorManager.deviceStatus.collectAsStateWithLifecycle()
+    val isConnected by sensorManager.isConnected.collectAsStateWithLifecycle()
+    val isListening by sensorManager.isListening.collectAsStateWithLifecycle()
+    val receivedMessages by sensorManager.receivedMessages.collectAsStateWithLifecycle()
     
     Column(
         modifier = Modifier
@@ -59,7 +59,7 @@ fun BleTest() {
         }
 
         Row {
-            Button(onClick = { AppContainer.instance.hm10Manager.reset() }) {
+            Button(onClick = { AppContainer.instance.sensorManager.reset() }) {
                 Text("重置传感器连接")
             }
         }
@@ -109,7 +109,7 @@ fun BleTest() {
                         style = MaterialTheme.typography.titleMedium
                     )
                     Button(
-                        onClick = { hm10Manager.clearMessages() },
+                        onClick = { sensorManager.clearMessages() },
                         enabled = receivedMessages.isNotEmpty()
                     ) {
                         Text("清除")
