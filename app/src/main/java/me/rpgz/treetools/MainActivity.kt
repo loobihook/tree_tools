@@ -19,12 +19,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import me.rpgz.treetools.routing.AppBottomNavigation
-import me.rpgz.treetools.routing.Routes
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import me.rpgz.treetools.ble.SensorMode
+import me.rpgz.treetools.preferences.UserPreferences
+import me.rpgz.treetools.routing.AppBottomNavigation
 import me.rpgz.treetools.routing.AppNavHost
+import me.rpgz.treetools.routing.Routes
 import me.rpgz.treetools.ui.theme.TreeToolsTheme
 
 
@@ -68,10 +73,24 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        appContainer = AppContainer.init(application, this)
+        
+        lifecycleScope.launch {
+            val userPreferences = UserPreferences(applicationContext)
+            val savedMode = userPreferences.sensorMode.first()
+            val sensorMode = try {
+                SensorMode.valueOf(savedMode)
+            } catch (e: IllegalArgumentException) {
+                SensorMode.REAL
+            }
+            
+            appContainer = AppContainer.init(
+                application, 
+                this@MainActivity, 
+                AppConfig(sensorMode = sensorMode)
+            )
 
-        enableEdgeToEdge()
-        setContent {
+            enableEdgeToEdge()
+            setContent {
             TreeToolsTheme {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -94,6 +113,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
         }
     }
 

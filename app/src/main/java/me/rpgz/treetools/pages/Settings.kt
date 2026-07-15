@@ -15,6 +15,7 @@ import androidx.navigation.NavHostController
 import me.rpgz.treetools.components.DashscopeApiKeySettings
 import me.rpgz.treetools.components.PlanetInferSettings
 import me.rpgz.treetools.components.ScreenTile
+import me.rpgz.treetools.components.SensorModeSettings
 import me.rpgz.treetools.viewmodels.SettingPageViewModel
 
 @Composable
@@ -34,6 +35,8 @@ fun SettingsPage(
         
         Spacer(modifier = Modifier.height(24.dp))
         
+        SensorModeSettings()
+        Spacer(modifier = Modifier.height(16.dp))
         DashscopeApiKeySettings(viewModel = viewModel)
         Spacer(modifier = Modifier.height(16.dp))
         PlanetInferSettings(viewModel=viewModel)

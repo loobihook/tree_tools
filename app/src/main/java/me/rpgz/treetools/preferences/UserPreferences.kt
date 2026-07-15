@@ -24,6 +24,7 @@ class UserPreferences @Inject constructor(
     companion object {
         private val DASHSCOPE_API_KEY = stringPreferencesKey("dashscope_api_key")
         private val PLANET_INFER_MODEL = stringPreferencesKey("planet_infer_model")
+        private val SENSOR_MODE = stringPreferencesKey("sensor_mode")
     }
     
     val dashscopeApiKey: Flow<String> = dataStore.data.map { preferences ->
@@ -35,6 +36,10 @@ class UserPreferences @Inject constructor(
         PlanetInferModel.fromValue(value)
     }
     
+    val sensorMode: Flow<String> = dataStore.data.map { preferences ->
+        preferences[SENSOR_MODE] ?: "REAL"
+    }
+    
     suspend fun setDashscopeApiKey(apiKey: String) {
         dataStore.edit { preferences ->
             preferences[DASHSCOPE_API_KEY] = apiKey
@@ -44,6 +49,12 @@ class UserPreferences @Inject constructor(
     suspend fun setPlanetInferModel(model: PlanetInferModel) {
         dataStore.edit { preferences ->
             preferences[PLANET_INFER_MODEL] = model.value
+        }
+    }
+    
+    suspend fun setSensorMode(mode: String) {
+        dataStore.edit { preferences ->
+            preferences[SENSOR_MODE] = mode
         }
     }
 }
