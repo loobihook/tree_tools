@@ -12,15 +12,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -39,15 +34,15 @@ sealed class Routes(val route : String) {
 
 fun bottomNavigationItems() : List<BottomNavigationItem> {
     return listOf(
-        BottomNavigationItem("首页", Icons.Default.Home, route=Routes.Home.route),
-        BottomNavigationItem("传感器", Icons.Filled.Bluetooth, route=Routes.Sensors.route),
-        BottomNavigationItem("设置", Icons.Default.Settings, route=Routes.Settings.route),
+        BottomNavigationItem("首页", me.rpgz.treetools.R.drawable.ic_tree, route=Routes.Home.route),
+        BottomNavigationItem("传感器", me.rpgz.treetools.R.drawable.ic_sensor, route=Routes.Sensors.route),
+        BottomNavigationItem("设置", me.rpgz.treetools.R.drawable.ic_settings, route=Routes.Settings.route),
     )
 }
 
 data class BottomNavigationItem(
     val label : String = "",
-    val icon : ImageVector = Icons.Filled.Home,
+    val icon : Int = me.rpgz.treetools.R.drawable.ic_tree,
     val route : String = ""
 )
 
@@ -97,7 +92,7 @@ fun AppBottomNavigation(navController: NavController, show: Boolean) {
                     },
                     icon = {
                         Icon(
-                            navigationItem.icon,
+                            painter = painterResource(id = navigationItem.icon),
                             contentDescription = navigationItem.label,
                             modifier = Modifier
                         )
