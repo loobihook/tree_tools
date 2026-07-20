@@ -12,55 +12,30 @@ import java.util.*
 import me.rpgz.treetools.api.tencent.uploadFile
 import android.util.Log
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.AlertDialog
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.background
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import me.rpgz.treetools.routing.Routes
 import coil3.compose.rememberAsyncImagePainter
@@ -68,7 +43,6 @@ import kotlinx.coroutines.launch
 import me.rpgz.treetools.AppContainer
 import me.rpgz.treetools.components.LeafCategoryInfer
 import me.rpgz.treetools.components.QrImage
-import me.rpgz.treetools.components.ScreenTile
 import me.rpgz.treetools.components.TreeReportGen
 import me.rpgz.treetools.preferences.UserPreferences
 import me.rpgz.treetools.viewmodels.CreateTreeSensePageViewModel
@@ -85,6 +59,7 @@ fun CreateTreeAnalysisPage(
     val context = LocalContext.current
     val userPreferences = remember { UserPreferences(context) }
     val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
 
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
@@ -100,10 +75,13 @@ fun CreateTreeAnalysisPage(
     val saveState by viewModel.saveState.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
+    var currentStep by remember { mutableStateOf(1) }
     var showImageSourceDialog by remember { mutableStateOf(false) }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     var showQrModal by remember { mutableStateOf(false) }
     var qrCodeUrl by remember { mutableStateOf<String?>(null) }
+
+    val steps = listOf("拍照识别", "测量数据", "生成报告")
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
@@ -127,7 +105,6 @@ fun CreateTreeAnalysisPage(
         }
     )
 
-    // Function to create image file URI for camera
     fun createImageFileUri(): Uri {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val imageFileName = "JPEG_${timeStamp}.jpg"
@@ -143,7 +120,6 @@ fun CreateTreeAnalysisPage(
         )
     }
 
-    // Handle save state changes
     LaunchedEffect(saveState) {
         when (saveState) {
             is CreateTreeSensePageViewModel.SaveState.Success -> {
@@ -156,243 +132,79 @@ fun CreateTreeAnalysisPage(
                 Toast.makeText(context, (saveState as CreateTreeSensePageViewModel.SaveState.Error).message, Toast.LENGTH_LONG).show()
                 viewModel.clearSaveState()
             }
-            else -> { /* No action needed */ }
+            else -> { }
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .verticalScroll(scrollState)
+    Column(modifier = Modifier.fillMaxSize()) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shadowElevation = 8.dp,
+            shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
         ) {
-            ScreenTile(if (viewModel.isEditMode()) "编辑树木分析记录" else "创建树木分析记录")
-
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Display sensor data
-            sensorData.value?.let { data ->
-                Text(
-                    text = "传感器数据",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outline,
-                            shape = MaterialTheme.shapes.medium
-                        )
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("土壤温度:", style = MaterialTheme.typography.bodyMedium)
-                        Text("${data.soilTemperature}°C", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("土壤湿度:", style = MaterialTheme.typography.bodyMedium)
-                        Text("${data.soilMoisture}%", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("土壤PH:", style = MaterialTheme.typography.bodyMedium)
-                        Text("${data.soilMoisturePH}", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("土壤电导率:", style = MaterialTheme.typography.bodyMedium)
-                        Text("${data.soilConductivity}μS/cm", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("环境温度:", style = MaterialTheme.typography.bodyMedium)
-                        Text("${data.temperature}°C", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("环境湿度:", style = MaterialTheme.typography.bodyMedium)
-                        Text("${data.humidity}%", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("大气压力:", style = MaterialTheme.typography.bodyMedium)
-                        Text("${data.atmosphericPressure}kPa", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("二氧化碳含量:", style = MaterialTheme.typography.bodyMedium)
-                        Text("${data.ambientCarbonDioxideContent}ppm", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("风速:", style = MaterialTheme.typography.bodyMedium)
-                        Text("${data.windSpeed}m/s", style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = formState.name,
-                onValueChange = viewModel::updateName,
-                label = { Text("名称") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = formState.note ?: "",
-                onValueChange = viewModel::updateNote,
-                label = { Text("备注") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "叶片图像",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outline,
-                        shape = MaterialTheme.shapes.medium
-                    )
-                    .clickable { showImageSourceDialog = true },
-                contentAlignment = Alignment.Center
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp)
             ) {
-                if (leafImageUri != null) {
-                    Image(
-                        painter = rememberAsyncImagePainter(leafImageUri),
-                        contentDescription = "叶片图像",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            Icons.Filled.Add,
-                            contentDescription = "添加图像",
-                            modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "点击选择叶片图像",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
+                Text(
+                    if (viewModel.isEditMode()) "编辑树木分析记录" else "新建分析记录",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                StepIndicator(steps = steps, currentStep = currentStep)
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = extraState.treeSpecies ?: "",
-                onValueChange = viewModel::updateTreeSpecies,
-                label = { Text("树种") },
-                modifier = Modifier.fillMaxWidth(),
-                suffix = {
-                    IconButton(onClick = {
-                        if (leafImageUri == null) {
-                            Toast.makeText(context, "请先选择叶片图像", Toast.LENGTH_SHORT).show()
-                        } else {
-                            viewModel.onInferSpeciesClick(context)
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(scrollState)
+            ) {
+                when (currentStep) {
+                    1 -> StepOne(
+                        leafImageUri = leafImageUri,
+                        onImageClick = { showImageSourceDialog = true },
+                        treeSpecies = extraState.treeSpecies ?: "",
+                        onUpdateSpecies = viewModel::updateTreeSpecies,
+                        onInferClick = {
+                            if (leafImageUri == null) {
+                                Toast.makeText(context, "请先选择叶片图像", Toast.LENGTH_SHORT).show()
+                            } else {
+                                viewModel.onInferSpeciesClick(context)
+                            }
                         }
-                    }) {
-                        Icon(Icons.Outlined.Star, contentDescription = "识别树种")
-                    }
-                }
-            )
+                    )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                    2 -> StepTwo(
+                        sensorData = sensorData.value,
+                        treeHeight = treeHeightState,
+                        onUpdateTreeHeight = viewModel::updateTreeHeight,
+                        treeDiameter = treeDiameterState,
+                        onUpdateTreeDiameter = viewModel::updateTreeDiameter,
+                        onRealSenseClick = { navController.navigate(Routes.RealSenseMeasurement.route) }
+                    )
 
-            OutlinedTextField(
-                value = treeHeightState,
-                onValueChange = viewModel::updateTreeHeight,
-                label = { Text("树高 (米)") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                suffix = {
-                    IconButton(onClick = {
-                        navController.navigate(Routes.RealSenseMeasurement.route)
-                    }) {
-                        Icon(Icons.Filled.Build, contentDescription = "测距")
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = treeDiameterState,
-                onValueChange = viewModel::updateTreeDiameter,
-                label = { Text("直径 (厘米)") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = formState.report ?: "",
-                onValueChange = viewModel::updateReport,
-                label = { Text("分析报告") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 4,
-                suffix = {
-                    Column {
-                        IconButton(onClick = {
+                    3 -> StepThree(
+                        name = formState.name,
+                        onUpdateName = viewModel::updateName,
+                        note = formState.note ?: "",
+                        onUpdateNote = viewModel::updateNote,
+                        report = formState.report ?: "",
+                        onGenerateReport = {
                             if (leafImageUri == null) {
                                 Toast.makeText(context, "请先选择叶片图像", Toast.LENGTH_SHORT).show()
                             } else {
                                 viewModel.onGenerateReportClick()
                             }
-                        }) {
-                            Icon(Icons.Filled.Star, contentDescription = "生成分析报告")
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        IconButton(onClick = {
-                            // Save report to temp file and upload
-                            viewModel.viewModelScope.launch {
+                        },
+                        onShareReport = {
+                            coroutineScope.launch {
                                 try {
                                     val report = formState.report
                                     if (report == null || report == "") {
@@ -400,13 +212,11 @@ fun CreateTreeAnalysisPage(
                                         return@launch
                                     }
                                     val now = System.currentTimeMillis()
-                                    val tempFile = File(context.filesDir, "tree_report_${now}.txt", )
+                                    val tempFile = File(context.filesDir, "tree_report_${now}.txt")
                                     tempFile.writeText(report, Charsets.UTF_8)
                                     val cosPath = "reports/tree_report_${now}.txt"
-                                    Log.d("CreateTreeAnalysis", "tempFile.absolutePath: ${tempFile.absolutePath}")
 
                                     val url = uploadFile(tempFile.absolutePath, cosPath, context)
-                                    Log.d("CreateTreeAnalysis", "Report uploaded successfully: $url")
                                     tempFile.delete()
 
                                     qrCodeUrl = url
@@ -415,189 +225,521 @@ fun CreateTreeAnalysisPage(
                                     Log.e("CreateTreeAnalysis", "Failed to upload report", e)
                                 }
                             }
+                        }
+                    )
+                }
 
-                        }) {
-                            Icon(Icons.Filled.QrCode, contentDescription = "分享分析报告")
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    if (currentStep > 1) {
+                        Button(
+                            onClick = { currentStep-- },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            )
+                        ) {
+                            Icon(Icons.Default.ArrowLeft, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("上一步")
+                        }
+                    } else {
+                        TextButton(
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("取消")
                         }
                     }
 
-
-                }
-            )
-
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                TextButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("取消")
-                }
-
-                Button(
-                    onClick = viewModel::saveRecord,
-                    modifier = Modifier.weight(1f),
-                    enabled = formState.name.isNotBlank() && saveState !is CreateTreeSensePageViewModel.SaveState.Saving
-                ) {
-                    if (saveState is CreateTreeSensePageViewModel.SaveState.Saving) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                    if (currentStep < 3) {
+                        Button(
+                            onClick = {
+                                when (currentStep) {
+                                    1 -> {
+                                        if (leafImageUri == null) {
+                                            Toast.makeText(context, "请先选择叶片图像", Toast.LENGTH_SHORT).show()
+                                            return@Button
+                                        }
+                                        currentStep++
+                                    }
+                                    2 -> {
+                                        currentStep++
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f)
                         ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                            Text(if (viewModel.isEditMode()) "更新中..." else "保存中...")
+                            Text("下一步")
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(Icons.Default.ArrowRight, contentDescription = null)
                         }
                     } else {
-                        Text(if (viewModel.isEditMode()) "更新" else "保存")
+                        Button(
+                            onClick = viewModel::saveRecord,
+                            modifier = Modifier.weight(1f),
+                            enabled = formState.name.isNotBlank() && saveState !is CreateTreeSensePageViewModel.SaveState.Saving
+                        ) {
+                            if (saveState is CreateTreeSensePageViewModel.SaveState.Saving) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                    Text(if (viewModel.isEditMode()) "更新中..." else "保存中...")
+                                }
+                            } else {
+                                Icon(Icons.Default.Check, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(if (viewModel.isEditMode()) "更新" else "保存")
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("正在加载记录...", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Loading overlay
-        if (isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "正在加载记录...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+        if (showImageSourceDialog) {
+            AlertDialog(
+                onDismissRequest = { showImageSourceDialog = false },
+                title = { Text("选择图像来源") },
+                text = { Text("请选择获取叶片图像的方式") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showImageSourceDialog = false
+                            photoUri = createImageFileUri()
+                            cameraLauncher.launch(photoUri!!)
+                        }
+                    ) {
+                        Text("拍照")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showImageSourceDialog = false
+                            imagePickerLauncher.launch("image/*")
+                        }
+                    ) {
+                        Text("从相册选择")
+                    }
+                }
+            )
+        }
+
+        if (showInferModal && leafBitmap != null) {
+            ModalBottomSheet(onDismissRequest = { viewModel.dismissInferModal() }) {
+                LeafCategoryInfer(
+                    bitmap = leafBitmap!!,
+                    onApplyResult = { name ->
+                        viewModel.applyPredictedSpecies("", name)
+                    },
+                    modifier = Modifier.padding(bottom = 32.dp),
+                    viewModel = settingPageViewModel
+                )
+            }
+        }
+
+        if (showReportGenModal && leafImageUri != null) {
+            ModalBottomSheet(onDismissRequest = { viewModel.dismissReportGenModal() }) {
+                val leafBitmapForReport = remember(leafImageUri) {
+                    try {
+                        ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, leafImageUri!!))
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+
+                if (leafBitmapForReport != null) {
+                    TreeReportGen(
+                        modifier = Modifier.fillMaxWidth().height(screenHeight / 2),
+                        leafImage = leafBitmapForReport,
+                        treeSpecies = extraState.treeSpecies,
+                        treeHeight = extraState.treeHeight,
+                        treeDiameter = extraState.treeDiameter,
+                        soilTemperature = sensorData.value?.soilTemperature,
+                        soilMoisture = sensorData.value?.soilMoisture,
+                        airCO2 = sensorData.value?.ambientCarbonDioxideContent,
+                        ambientTemperature = sensorData.value?.temperature,
+                        ambientHumidity = sensorData.value?.humidity,
+                        userPreferences = userPreferences,
+                        onReportGenerated = { report ->
+                            viewModel.updateReport(report)
+                            viewModel.dismissReportGenModal()
+                        },
+                        onClose = { viewModel.dismissReportGenModal() }
                     )
                 }
             }
         }
-    }
 
-    // Dialog for choosing image source
-    if (showImageSourceDialog) {
-        AlertDialog(
-            onDismissRequest = { showImageSourceDialog = false },
-            title = { Text("选择图像来源") },
-            text = { Text("请选择获取叶片图像的方式") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showImageSourceDialog = false
-                        photoUri = createImageFileUri()
-                        cameraLauncher.launch(photoUri!!)
-                    }
+        if (showQrModal && qrCodeUrl != null) {
+            ModalBottomSheet(onDismissRequest = { showQrModal = false }) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text("拍照")
+                    Text("分享分析报告", style = MaterialTheme.typography.titleLarge)
+                    QrImage(data = qrCodeUrl!!, size = 300)
+                    Text("扫描二维码查看报告", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showImageSourceDialog = false
-                        imagePickerLauncher.launch("image/*")
+            }
+        }
+    }
+}
+
+@Composable
+fun StepIndicator(steps: List<String>, currentStep: Int) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            steps.forEachIndexed { index, step ->
+                val isActive = index + 1 == currentStep
+                val isCompleted = index + 1 < currentStep
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Surface(
+                        modifier = Modifier.size(36.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        color = when {
+                            isActive -> MaterialTheme.colorScheme.primary
+                            isCompleted -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.surfaceVariant
+                        }
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            if (isCompleted) {
+                                Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = Color.White
+                                )
+                            } else {
+                                Text(
+                                    "${index + 1}",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isActive) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
-                ) {
-                    Text("从相册选择")
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        step,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            steps.forEachIndexed { index, _ ->
+                if (index > 0) {
+                    val isCompleted = index < currentStep
+                    Spacer(modifier = Modifier.weight(1f))
+                    Box(
+                        modifier = Modifier
+                            .width(16.dp)
+                            .height(2.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(2.dp)
+                                .clip(RoundedCornerShape(1.dp))
+                                .background(if (isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StepOne(
+    leafImageUri: Uri?,
+    onImageClick: () -> Unit,
+    treeSpecies: String,
+    onUpdateSpecies: (String) -> Unit,
+    onInferClick: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text("拍照与识别", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text("拍摄叶片照片或从相册选择，系统将自动识别树种", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+                .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
+                .clickable(onClick = onImageClick)
+                .clip(RoundedCornerShape(16.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (leafImageUri != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(leafImageUri),
+                    contentDescription = "叶片图像",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Surface(
+                        modifier = Modifier.size(72.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.Camera, contentDescription = null, modifier = Modifier.size(36.dp))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("点击拍照或上传叶片图片", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                    Text("支持 JPG、PNG 格式", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = treeSpecies,
+            onValueChange = onUpdateSpecies,
+            label = { Text("树种") },
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(onClick = onInferClick) {
+                    Icon(
+                                    Icons.Default.Bolt,
+                                    contentDescription = "AI识别树种",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
                 }
             }
         )
-    }
 
-    // Modal for leaf species inference
-    if (showInferModal && leafBitmap != null) {
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.dismissInferModal() }
-        ) {
-            LeafCategoryInfer(
-                bitmap = leafBitmap!!,
-                onApplyResult = { name ->
-                    viewModel.applyPredictedSpecies("" , name)
-                },
-                modifier = Modifier.padding(bottom = 32.dp),
-                viewModel = settingPageViewModel
-            )
-        }
-    }
-
-    // Modal for tree report generation
-    if (showReportGenModal && leafImageUri != null) {
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.dismissReportGenModal() }
-        ) {
-            val leafBitmapForReport = remember(leafImageUri) {
-                try {
-                    ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, leafImageUri!!))
-                } catch (e: Exception) {
-                    null
+        if (treeSpecies.isNotBlank()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        modifier = Modifier.size(40.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color.Green
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(20.dp), tint = Color.White)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("已识别树种: $treeSpecies", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
                 }
             }
+        }
+    }
+}
 
-            if (leafBitmapForReport != null) {
-                TreeReportGen(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(screenHeight / 2),
-                    leafImage = leafBitmapForReport,
-                    treeSpecies = extraState.treeSpecies,
-                    treeHeight = extraState.treeHeight,
-                    treeDiameter = extraState.treeDiameter,
-                    soilTemperature = sensorData.value?.soilTemperature,
-                    soilMoisture = sensorData.value?.soilMoisture,
-                    airCO2 = sensorData.value?.ambientCarbonDioxideContent,
-                    ambientTemperature = sensorData.value?.temperature,
-                    ambientHumidity = sensorData.value?.humidity,
-                    userPreferences = userPreferences,
-                    onReportGenerated = { report ->
-                        viewModel.updateReport(report)
-                        viewModel.dismissReportGenModal()
-                    },
-                    onClose = { viewModel.dismissReportGenModal() }
-                )
+@Composable
+fun StepTwo(
+    sensorData: me.rpgz.treetools.ble.Hm10Manager.SensorData?,
+    treeHeight: String,
+    onUpdateTreeHeight: (String) -> Unit,
+    treeDiameter: String,
+    onUpdateTreeDiameter: (String) -> Unit,
+    onRealSenseClick: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text("测量数据", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text("输入树木高度和直径，或使用 RealSense 进行精确测量", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = treeHeight,
+            onValueChange = onUpdateTreeHeight,
+            label = { Text("树高 (米)") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            trailingIcon = {
+                IconButton(onClick = onRealSenseClick) {
+                    Icon(Icons.Default.DeviceHub, contentDescription = "RealSense测量", tint = MaterialTheme.colorScheme.secondary)
+                }
+            }
+        )
+
+        OutlinedTextField(
+            value = treeDiameter,
+            onValueChange = onUpdateTreeDiameter,
+            label = { Text("直径 (厘米)") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text("传感器数据", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+        if (sensorData != null) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SensorDataRow("土壤温度", "${sensorData.soilTemperature}°C", Icons.Default.Thermostat)
+                SensorDataRow("土壤湿度", "${sensorData.soilMoisture}%", Icons.Default.Water)
+                SensorDataRow("土壤PH", "${sensorData.soilMoisturePH}", Icons.Default.Lightbulb)
+                SensorDataRow("环境温度", "${sensorData.temperature}°C", Icons.Default.Cloud)
+                SensorDataRow("环境湿度", "${sensorData.humidity}%", Icons.Default.Cloud)
+                SensorDataRow("CO2浓度", "${sensorData.ambientCarbonDioxideContent}ppm", Icons.Default.GasMeter)
+            }
+        } else {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("正在读取传感器数据...", style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
     }
+}
 
-    // Modal for QR code display
-    if (showQrModal && qrCodeUrl != null) {
-        ModalBottomSheet(
-            onDismissRequest = { showQrModal = false }
+@Composable
+fun SensorDataRow(title: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+    }
+}
+
+@Composable
+fun StepThree(
+    name: String,
+    onUpdateName: (String) -> Unit,
+    note: String,
+    onUpdateNote: (String) -> Unit,
+    report: String,
+    onGenerateReport: () -> Unit,
+    onShareReport: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text("备注与报告", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text("添加备注信息并生成AI分析报告", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = name,
+            onValueChange = onUpdateName,
+            label = { Text("记录名称") },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("例如：小区门口梧桐树 - 2024年5月") }
+        )
+
+        OutlinedTextField(
+            value = note,
+            onValueChange = onUpdateNote,
+            label = { Text("备注") },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 3,
+            placeholder = { Text("添加备注信息，如测量时间、天气情况等") }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = "分享分析报告",
-                    style = MaterialTheme.typography.titleLarge
-                )
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("AI分析报告", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        IconButton(onClick = onGenerateReport) {
+                            Icon(Icons.Default.Lightbulb, contentDescription = "生成报告", tint = MaterialTheme.colorScheme.primary)
+                        }
+                        IconButton(onClick = onShareReport) {
+                            Icon(Icons.Default.Share, contentDescription = "分享报告", tint = MaterialTheme.colorScheme.secondary)
+                        }
+                    }
+                }
 
-                QrImage(data = qrCodeUrl!!, size = 300)
+                Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "扫描二维码查看报告",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
+                if (report.isNotBlank()) {
+                    Text(
+                        report,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 6,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().height(80.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("点击魔杖图标生成AI分析报告", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
             }
         }
     }

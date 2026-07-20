@@ -17,7 +17,9 @@ data class HomePageUiState(
     val hasMorePages: Boolean = true,
     val currentPage: Int = 0,
     val searchQuery: String = "",
-    val error: String? = null
+    val error: String? = null,
+    val todayCount: Int = 0,
+    val reportCount: Int = 0
 )
 
 @HiltViewModel
@@ -67,12 +69,18 @@ class HomePageViewModel @Inject constructor(
         
         flowJob = viewModelScope.launch {
             flow.collect { allRecords ->
+                val todayStart = getTodayStartTimestamp()
+                val todayCount = allRecords.count { it.createdAt >= todayStart }
+                val reportCount = allRecords.count { !it.report.isNullOrBlank() }
+                
                 _uiState.value = _uiState.value.copy(
                     records = allRecords.take(pageSize * (_uiState.value.currentPage.coerceAtLeast(1))),
                     isLoading = false,
                     isRefreshing = false,
                     hasMorePages = allRecords.size > pageSize * (_uiState.value.currentPage.coerceAtLeast(1)),
-                    currentPage = if (_uiState.value.currentPage == 0) 1 else _uiState.value.currentPage
+                    currentPage = if (_uiState.value.currentPage == 0) 1 else _uiState.value.currentPage,
+                    todayCount = todayCount,
+                    reportCount = reportCount
                 )
             }
         }
@@ -154,5 +162,14 @@ class HomePageViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         flowJob?.cancel()
+    }
+    
+    private fun getTodayStartTimestamp(): Long {
+        val calendar = java.util.Calendar.getInstance()
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        calendar.set(java.util.Calendar.MINUTE, 0)
+        calendar.set(java.util.Calendar.SECOND, 0)
+        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        return calendar.timeInMillis
     }
 }
